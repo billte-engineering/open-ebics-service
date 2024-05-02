@@ -125,6 +125,24 @@
           "organization": {
             "type": "string",
             "example": "Billte CH"
+          },
+          "orderTypeRequired": {
+            "type": "array",
+            "items": {},
+            "example": [
+              "C54",
+              "C53",
+              "C52"
+            ]
+          },
+          "orderTypeGranted": {
+            "type": "array",
+            "items": {},
+            "example": [
+              "C54",
+              "C53",
+              "C52"
+            ]
           }
         }
       },
@@ -409,7 +427,7 @@
         }
       }
     },
-    "/biller/{billerId}/invite": {
+    "/biller/invite": {
       "post": {
         "summary": "Send request for inviting a biller for EBICS connection",
         "operationId": "inviteBillerForSpr",
@@ -419,15 +437,6 @@
         "parameters": [
           {
             "$ref": "#/components/parameters/header_authorization"
-          },
-          {
-            "name": "billerId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
           }
         ],
         "requestBody": {
@@ -435,7 +444,19 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Biller"
+                "type": "object",
+                "required": [
+                  "email"
+                ],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "description": "Contact email for the biller",
+                    "example": "test@billte.ch",
+                    "minLength": 1,
+                    "maxLength": 70
+                  }
+                }
               }
             }
           }
@@ -446,7 +467,8 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Biller"
+                  "type": "string",
+                  "example": "Biller Invited"
                 }
               }
             }
