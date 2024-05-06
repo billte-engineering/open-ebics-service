@@ -1,0 +1,403 @@
+openapi: 3.0.0
+info:
+  description: >-
+    The application programming interface for third party applications allows
+    communication with a financial institution (like Bank).
+  version: 1.0.7
+  title: Billte EBICS Service
+  contact:
+    email: sales@billte.ch
+servers:
+  - url: https://api.billte.ch/ebics
+    description: Production server
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    header_authorization:
+      in: header
+      name: authorization
+      required: true
+      schema:
+        type: string
+  schemas:
+    SoftwarePartner:
+      type: object
+      properties:
+        sprId:
+          type: string
+          description: Unique Software partner ID provided by the system
+          example: SPRID000000001
+          maxLength: 17
+          minLength: 17
+          pattern: SPRID([0=9])*
+        name:
+          type: string
+          description: Name of software partner
+          example: Test
+        type:
+          type: string
+          description: Type of software partner
+          enum:
+            - INDIVIDUAL
+            - COMPANY
+        email:
+          type: string
+          description: Contact email for software partner
+          example: test@billte.ch
+        pid:
+          type: string
+          description: Software partner PiD provided by the system
+          example: 41NN00BBBBBBBBBPP
+          maxLength: 17
+          minLength: 17
+          pattern: ([0=9])*
+        secret:
+          type: string
+          description: Software partner secret key provided by the system
+          example: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+          maxLength: 36
+          minLength: 36
+      required:
+        - type
+        - name
+        - pid
+        - secret
+    User:
+      type: object
+      required:
+        - name
+        - email
+        - country
+        - organization
+        - status
+      properties:
+        id:
+          type: string
+          description: >-
+            A unique id for this User. Property must not be given when
+            creating a new User.
+          example: BIID0000123456
+          maxLength: 14
+          pattern: BIID[0-9]{10}
+        status:
+          type: string
+          description: The status of the User
+          enum:
+            - ACTIVE
+            - INACTIVE
+        name:
+          type: string
+          example: Verlag Neuer
+        email:
+          type: string
+          example: test@billte.ch
+        country:
+          type: string
+          example: Switzerland
+        organization:
+          type: string
+          example: Billte CH
+        orderTypeRequired:
+          type: array
+          items: {}
+          example: [C54, C53, C52]
+        orderTypeGranted:
+          type: array
+          items: {}
+          example: [C54, C53, C52]  
+          
+    SoftwarePartnerAuthenticationRequest:
+      type: object
+      properties:
+        sprPid:
+          type: string
+          description: Software partner PiD provided by the system
+          example: 41NN00BBBBBBBBBPP
+          maxLength: 17
+          minLength: 17
+          pattern: ([0=9])*
+        sprSecret:
+          type: string
+          description: Software partner secret key provided by the system
+          example: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+          maxLength: 36
+          minLength: 36
+      required:
+        - sprPid
+        - sprSecret
+    SoftwarePartnerAuthenticationResponse:
+      type: object
+      properties:
+        sprPid:
+          type: string
+          description: User PiD provided by the system
+          example: 41NN00BBBBBBBBBPP
+          maxLength: 17
+          minLength: 17
+          pattern: ([0=9])*
+        expiresIn:
+          type: number
+          description: Expiration Time for access token in milliseconds
+          example: 3600
+        token:
+          type: string
+          description: Access Token
+          example: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+          maxLength: 300
+          minLength: 1
+      required:
+        - sprPid
+        - token
+        - expiresIn
+    AuthenticationError:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Cause for not issuing token
+          example: Not found!
+          maxLength: 300
+          minLength: 1
+        errorCode:
+          type: number
+          description: Error code for the error
+          example: 404
+      required:
+        - error
+        - errorCode
+    OrderType:
+      type: string
+      description: EBICS file types supported by the system
+      enum:
+        - C52
+        - C53
+        - C54
+paths:
+  /spr/authenticate:
+    post:
+      summary: Authenticate Software Partner
+      description: >-
+        Returns an authentication token for the software partner to be used in
+        other APIs.
+      operationId: getAuthenticationTokenForSoftwarePartner
+      tags:
+        - spr
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SoftwarePartnerAuthenticationRequest'
+      responses:
+        '200':
+          description: User Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SoftwarePartnerAuthenticationResponse'
+        default:
+          description: >-
+            See section Error Handling of the Software Partner API documentation
+            for further details about errors and error handling.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthenticationError'
+  /spr:
+    get:
+      summary: Get Software Partner information
+      operationId: getSoftwarePartner
+      tags:
+        - spr
+      parameters:
+        - $ref: '#/components/parameters/header_authorization'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SoftwarePartner'
+  /user:
+    post:
+      summary: Send request for adding a user for Software Partner
+      operationId: addUserForSpr
+      tags:
+        - user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '405':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthenticationError'
+  /user/{userId}:
+    parameters:
+      - $ref: '#/components/parameters/header_authorization'
+      - name: userId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+    get:
+      summary: Get User of Software Partner
+      operationId: getUser
+      tags:
+        - user
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+    put:
+      summary: Send request for updating a user for Software Partner
+      operationId: updateUserForSpr
+      tags:
+        - user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '405':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthenticationError'
+  /user/invite:
+    post:
+      summary: Send request for inviting a user for EBICS connection
+      operationId: inviteUserForSpr
+      tags:
+        - user
+      parameters:
+        - $ref: '#/components/parameters/header_authorization'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+              properties:
+                email:
+                  type: string
+                  description: "Contact email for the user"
+                  example: "test@billte.ch"
+                  minLength: 1
+                  maxLength: 70
+
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: string
+                example: User Invited
+        '405':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthenticationError'
+  /file/fetch/{orderType}/user/{userId}:
+    get:
+      summary: Fetch File from EBICS server
+      operationId: fetchFileFromEbics
+      tags:
+        - file
+      parameters:
+        - $ref: '#/components/parameters/header_authorization'
+        - name: orderType
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/OrderType'
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: string
+        '400':
+          description: Invalid status value
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthenticationError'
+  /file/fetch/{orderType}/user/{userId}/parsed:
+    get:
+      summary: Fetch parsed file data from EBICS server
+      operationId: fetchFileDataFromEbics
+      tags:
+        - file
+      parameters:
+        - $ref: '#/components/parameters/header_authorization'
+        - name: orderType
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/OrderType'
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: string
+        '400':
+          description: Invalid status value
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthenticationError'
