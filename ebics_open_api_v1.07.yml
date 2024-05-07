@@ -100,6 +100,9 @@ components:
         organization:
           type: string
           example: Billte CH
+        iban:
+          type: string
+          example: CH9300762011623852957
         orderTypeRequired:
           type: array
           items: {}
