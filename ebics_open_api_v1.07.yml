@@ -1,8 +1,7 @@
 openapi: 3.0.0
 info:
   description: >-
-    The application programming interface for third party applications allows
-    communication with a financial institution (like Bank).
+    The Application Programming Interface (API) tailored for third-party applications leverages the Electronic Banking Internet Communication Standard (EBICS) to enable robust and secure interactions with financial institutions such as banks. This API documentation provides developers with the necessary tools to integrate advanced banking functionalities into their applications, including transaction processing, account management, and financial data analysis. By adhering to the EBICS standards, the API ensures high levels of data security and compliance with international banking regulations, making it ideal for applications requiring reliable financial transactions and data handling.
   version: 1.0.7
   title: Billte EBICS Service
   contact:
@@ -210,6 +209,8 @@ paths:
   /spr:
     get:
       summary: Get Software Partner information
+      description: >-
+        Retrieves detailed information about the authenticated software partner.
       operationId: getSoftwarePartner
       tags:
         - spr
@@ -225,6 +226,8 @@ paths:
   /user:
     post:
       summary: Send request for adding a user for Software Partner
+      description: >-
+        Allows adding a new user under a software partner account.
       operationId: addUserForSpr
       tags:
         - user
@@ -259,6 +262,8 @@ paths:
     get:
       summary: Get User of Software Partner
       operationId: getUser
+      description: >-
+        Fetches details of a specific user by their ID.
       tags:
         - user
       parameters:
@@ -278,6 +283,8 @@ paths:
     put:
       summary: Send request for updating a user for Software Partner
       operationId: updateUserForSpr
+      description: >-
+        Updates existing user information.
       tags:
         - user
       requestBody:
@@ -303,6 +310,8 @@ paths:
     post:
       summary: Send request for inviting a user for EBICS connection
       operationId: inviteUserForSpr
+      description: >-
+        Sends an invitation form to user to establish an EBICS connection.
       tags:
         - user
       parameters:
@@ -341,6 +350,8 @@ paths:
     get:
       summary: Fetch File from EBICS server
       operationId: fetchFileFromEbics
+      description: >-
+        Retrieves a file from the EBICS server for a specific user and file type.
       tags:
         - file
       parameters:
@@ -373,6 +384,8 @@ paths:
     get:
       summary: Fetch parsed file data from EBICS server
       operationId: fetchFileDataFromEbics
+      description: >-
+        Retrieves parsed data of a specific file type for a user from the EBICS server.
       tags:
         - file
       parameters:
